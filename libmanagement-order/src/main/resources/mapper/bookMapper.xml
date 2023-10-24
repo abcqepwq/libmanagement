@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.company.libmanagementorder.mapper.BookMapper">
+    <insert id="addBook" useGeneratedKeys="true" keyProperty="bookId">
+        insert into book(bookName, author) values (#{bookName}, #{author});
+    </insert>
+
+    <insert id="addBookInventory" keyProperty="bookId">
+        insert into book_inventory(bookId, inventory, totalInventory) values (#{bookId}, #{inventory},#{inventory});
+    </insert>
+
+    <select id="getBook" resultType="Book">
+        SELECT book.*, book_inventory.inventory as inventory, book_inventory.totalInventory as totalInventory
+        FROM book INNER JOIN book_inventory ON book.bookId = book_inventory.bookId
+        WHERE inactive = 0 and book.bookId = #{bookId} LIMIT 1
+    </select>
+
+    <update id="udpateBookInventory">
+        update book_inventory
+        <set>
+            inventory = inventory + #{inventory},
+            totalinventory = totalinventory + #{inventory}
+        </set>
+        where bookId = #{bookId}
+    </update>
+
+    <update id="inactiveBook">
+        update book set inactive = #{inactive} where bookId = #{bookId}
+    </update>
+
+    <delete id="deleteBookInventory" parameterType="long">
+        delete from book_inventory where bookId = #{bookId}
+    </delete>
+
+    <select id="getBookList" resultType="Book">
+        SELECT book.*, book_inventory.inventory, book_inventory.totalInventory
+        FROM book
+        INNER JOIN book_inventory ON book.bookId = book_inventory.bookId
+        WHERE inactive = 0 and inventory > 0 LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="getTotalCount" resultType="int">
+        SELECT count(1)
+        FROM book
+        WHERE inactive = 0
+    </select>
+
+    <select id="getBookByNameAndAuthor" resultType="Book">
+        SELECT book.*, book_inventory.inventory as inventory, book_inventory.totalInventory as totalInventory
+        FROM book LEFT JOIN book_inventory ON book.bookId = book_inventory.bookId
+        WHERE inactive = 0 and book.bookName = #{bookName} and author = #{author} LIMIT 1
+    </select>
+
+    <select id="getInactiveBookByNameAndAuthor" resultType="Book">
+        SELECT book.*, book_inventory.inventory as inventory, book_inventory.totalInventory as totalInventory
+        FROM book LEFT JOIN book_inventory ON book.bookId = book_inventory.bookId
+        WHERE inactive = 1 and book.bookName = #{bookName} and author = #{author} LIMIT 1
+    </select>
+
+    <update id="udpateBookCurrentInventory">
+        update book_inventory
+        <set>
+            inventory = inventory + #{inventory}
+        </set>
+        where bookId = #{bookId}
+    </update>
+
+    <resultMap id="bookOrderResultMap" type="BookWithOrder">
+        <id property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="password" column="password"/>
+        <result property="age" column="age"/>
+        <result property="phone" column="phone"/>
+        <result property="gender" column="gender"/>
+        <collection property="orderList" >
+            <id property="id" column="id"/>
+            <result property="userId" column="userId"/>
+        </collection>
+    </resultMap>
+</mapper>
